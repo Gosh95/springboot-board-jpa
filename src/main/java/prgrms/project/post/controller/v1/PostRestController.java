@@ -43,11 +43,4 @@ public class PostRestController {
 
         return DefaultApiResponse.ok(true);
     }
-
-    @DeleteMapping
-    public DefaultApiResponse<Boolean> deleteAllPosts() {
-        postService.deleteAll();
-
-        return DefaultApiResponse.ok(true);
-    }
 }
