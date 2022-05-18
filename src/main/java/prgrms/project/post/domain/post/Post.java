@@ -7,7 +7,6 @@ import prgrms.project.post.domain.BaseEntity;
 import prgrms.project.post.domain.user.User;
 
 import javax.persistence.*;
-import java.util.Objects;
 
 import static javax.persistence.FetchType.LAZY;
 import static javax.persistence.GenerationType.AUTO;
@@ -20,17 +19,18 @@ public class Post extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = AUTO)
+    @Column(name = "post_id", unique = true, nullable = false, updatable = false)
     private Long id;
 
-    @Column(nullable = false, length = 100)
-    String title;
+    @Column(name = "title", nullable = false, length = 100)
+    private String title;
 
     @Lob
-    @Column(nullable = false)
-    String content;
+    @Column(name = "content", nullable = false)
+    private String content;
 
     @ManyToOne(fetch = LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Builder
@@ -41,7 +41,7 @@ public class Post extends BaseEntity {
         this.assignUser(user);
     }
 
-    public Post update(String title, String content) {
+    public Post updateTitleAndContent(String title, String content) {
         this.title = title;
         this.content = content;
 
@@ -49,10 +49,6 @@ public class Post extends BaseEntity {
     }
 
     private void assignUser(User user) {
-        if (Objects.nonNull(this.user)) {
-            this.user.getPosts().remove(this);
-        }
-
         this.user = user;
         user.getPosts().add(this);
     }
