@@ -2,10 +2,11 @@ package prgrms.project.post.controller.v1;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import prgrms.project.post.controller.response.DefaultApiResponse;
-import prgrms.project.post.service.DefaultPage;
+import prgrms.project.post.controller.response.PageResponse;
+import prgrms.project.post.controller.response.UserIdResponse;
 import prgrms.project.post.service.user.UserDto;
 import prgrms.project.post.service.user.UserService;
 
@@ -17,29 +18,29 @@ public class UserRestController {
     private final UserService userService;
 
     @PostMapping
-    public DefaultApiResponse<Long> registerUser(@RequestBody @Validated UserDto userDto) {
-        return DefaultApiResponse.ok(userService.registerUser(userDto));
+    public ResponseEntity<UserIdResponse> registerUser(@RequestBody @Validated UserDto userDto) {
+        return ResponseEntity.ok(UserIdResponse.of(userService.registerUser(userDto)));
     }
 
     @GetMapping("/{userId}")
-    public DefaultApiResponse<UserDto> searchUser(@PathVariable Long userId) {
-        return DefaultApiResponse.ok(userService.searchById(userId));
+    public ResponseEntity<UserDto> searchUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(userService.searchById(userId));
     }
 
     @GetMapping
-    public DefaultApiResponse<DefaultPage<UserDto>> searchAllUser(Pageable pageable) {
-        return DefaultApiResponse.ok(userService.searchAll(pageable));
+    public ResponseEntity<PageResponse<UserDto>> searchAllUser(Pageable pageable) {
+        return ResponseEntity.ok(userService.searchAll(pageable));
     }
 
     @PutMapping("/{userId}")
-    public DefaultApiResponse<Long> updateUser(@PathVariable Long userId, @RequestBody @Validated UserDto userDto) {
-        return DefaultApiResponse.ok(userService.updateUser(userId, userDto));
+    public ResponseEntity<UserIdResponse> updateUser(@PathVariable Long userId, @RequestBody @Validated UserDto userDto) {
+        return ResponseEntity.ok(UserIdResponse.of(userService.updateUser(userId, userDto)));
     }
 
     @DeleteMapping("/{userId}")
-    public DefaultApiResponse<Boolean> deleteUser(@PathVariable Long userId) {
+    public ResponseEntity<UserIdResponse> deleteUser(@PathVariable Long userId) {
         userService.deleteById(userId);
 
-        return DefaultApiResponse.ok(true);
+        return ResponseEntity.ok(UserIdResponse.of(userId));
     }
 }

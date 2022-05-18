@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import prgrms.project.post.repository.UserRepository;
-import prgrms.project.post.service.DefaultPage;
+import prgrms.project.post.controller.response.PageResponse;
 import prgrms.project.post.util.mapper.HobbyMapper;
 import prgrms.project.post.util.mapper.UserMapper;
 
@@ -38,8 +38,8 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public DefaultPage<UserDto> searchAll(Pageable pageable) {
-        return DefaultPage.of(userRepository.findUsersAll(pageable).map(userMapper::toDto));
+    public PageResponse<UserDto> searchAll(Pageable pageable) {
+        return PageResponse.of(userRepository.findUsersAll(pageable).map(userMapper::toDto));
     }
 
     @Transactional

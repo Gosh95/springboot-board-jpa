@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import prgrms.project.post.repository.PostRepository;
-import prgrms.project.post.service.DefaultPage;
+import prgrms.project.post.controller.response.PageResponse;
 import prgrms.project.post.util.mapper.PostMapper;
 
 import java.util.NoSuchElementException;
@@ -35,8 +35,8 @@ public class PostService {
 
 
     @Transactional(readOnly = true)
-    public DefaultPage<PostDto> searchAll(Pageable pageable) {
-        return DefaultPage.of(postRepository.findPostsAll(pageable).map(postMapper::toDto));
+    public PageResponse<PostDto> searchAll(Pageable pageable) {
+        return PageResponse.of(postRepository.findPostsAll(pageable).map(postMapper::toDto));
     }
 
     @Transactional

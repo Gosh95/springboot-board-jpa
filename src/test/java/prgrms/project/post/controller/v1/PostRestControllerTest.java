@@ -10,12 +10,18 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
+<<<<<<< HEAD
 import org.springframework.transaction.annotation.Transactional;
 import prgrms.project.post.domain.post.Post;
 import prgrms.project.post.domain.user.Hobby;
 import prgrms.project.post.domain.user.User;
 import prgrms.project.post.repository.PostRepository;
 import prgrms.project.post.repository.UserRepository;
+=======
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import prgrms.project.post.controller.response.PostIdResponse;
+import prgrms.project.post.controller.response.UserIdResponse;
+>>>>>>> 1db10fa (refactor: 리스폰스 수정)
 import prgrms.project.post.service.post.PostDto;
 import prgrms.project.post.service.post.PostService;
 import prgrms.project.post.util.mapper.UserMapper;
@@ -61,6 +67,7 @@ class PostRestControllerTest {
     Long postId;
 
     @BeforeEach
+<<<<<<< HEAD
     void setup() {
         User user = User.builder().name("name").age(10).hobbies(Set.of(new Hobby("swim"))).build();
         savedUser = userRepository.save(user);
@@ -68,6 +75,23 @@ class PostRestControllerTest {
         var post = Post.builder().title("title").content("content").user(savedUser).build();
         var savedPost = postRepository.save(post);
         postId = savedPost.getId();
+=======
+    void setup() throws Exception {
+        var userRequest = UserDto.builder().name("name").age(10).hobbies(Set.of(new HobbyDto("swim"))).build();
+        var userRequestString = objectMapper.writeValueAsString(userRequest);
+        var userIdResult = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/users").content(userRequestString).contentType(APPLICATION_JSON)).andReturn();
+        var userIdResponse = objectMapper.readValue(userIdResult.getResponse().getContentAsString(), UserIdResponse.class);
+        var userDtoResult = mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/users/{userId}", userIdResponse.userId()).contentType(APPLICATION_JSON)).andReturn();
+
+        userDto = objectMapper.readValue(userDtoResult.getResponse().getContentAsString(), UserDto.class);
+
+        var postRequest = PostDto.builder().title("title").content("content").user(userDto).build();
+        var postRequestString = objectMapper.writeValueAsString(postRequest);
+        var postIdResult = mockMvc.perform(MockMvcRequestBuilders.post("/api/v1/posts").content(postRequestString).contentType(APPLICATION_JSON)).andReturn();
+        var postIdResponse = objectMapper.readValue(postIdResult.getResponse().getContentAsString(), PostIdResponse.class);
+
+        postId = postIdResponse.postId();
+>>>>>>> 1db10fa (refactor: 리스폰스 수정)
     }
 
     @Test
@@ -180,6 +204,7 @@ class PostRestControllerTest {
                 .contentType(APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(document("post-update",
+<<<<<<< HEAD
                         requestFields(
                                 fieldWithPath("id").type(NUMBER).description("게시판아이디"),
                                 fieldWithPath("title").type(STRING).description("게시판제목"),
@@ -198,5 +223,78 @@ class PostRestControllerTest {
                         )
                     )
                 );
+=======
+                    requestSnippetForUpdate(),
+                    responseSnippetForSaveAndUpdate()
+                )
+            );
+    }
+
+    private RequestFieldsSnippet requestSnippetForSave() {
+        return requestFields(
+            fieldWithPath("id").type(NULL).description("게시판아이디"),
+            fieldWithPath("title").type(STRING).description("게시판제목"),
+            fieldWithPath("content").type(STRING).description("게시판내용"),
+            fieldWithPath("user").type(OBJECT).description("회원"),
+            fieldWithPath("user.id").type(NUMBER).description("회원아이디"),
+            fieldWithPath("user.name").type(STRING).description("회원이름"),
+            fieldWithPath("user.age").type(NUMBER).description("회원나이"),
+            fieldWithPath("user.hobbies").type(ARRAY).description("회원취미목록"),
+            fieldWithPath("user.hobbies[0].hobby").type(STRING).description("회원취미")
+        );
+    }
+
+    private RequestFieldsSnippet requestSnippetForUpdate() {
+        return requestFields(
+            fieldWithPath("id").type(NUMBER).description("게시판아이디"),
+            fieldWithPath("title").type(STRING).description("게시판제목"),
+            fieldWithPath("content").type(STRING).description("게시판내용"),
+            fieldWithPath("user").type(OBJECT).description("회원"),
+            fieldWithPath("user.id").type(NUMBER).description("회원아이디"),
+            fieldWithPath("user.name").type(STRING).description("회원이름"),
+            fieldWithPath("user.age").type(NUMBER).description("회원나이"),
+            fieldWithPath("user.hobbies").type(ARRAY).description("회원취미목록"),
+            fieldWithPath("user.hobbies[0].hobby").type(STRING).description("회원취미")
+        );
+    }
+
+    private ResponseFieldsSnippet responseSnippetForFindById() {
+        return responseFields(
+            fieldWithPath("id").type(NUMBER).description("게시판아이디"),
+            fieldWithPath("title").type(STRING).description("게시판제목"),
+            fieldWithPath("content").type(STRING).description("게시판내용"),
+            fieldWithPath("user").type(OBJECT).description("회원"),
+            fieldWithPath("user.id").type(NUMBER).description("회원아이디"),
+            fieldWithPath("user.name").type(STRING).description("회원이름"),
+            fieldWithPath("user.age").type(NUMBER).description("회원나이"),
+            fieldWithPath("user.hobbies").type(ARRAY).description("회원취미목록"),
+            fieldWithPath("user.hobbies[0].hobby").type(STRING).description("회원취미")
+        );
+    }
+
+    private ResponseFieldsSnippet responseSnippetForFindAll() {
+        return responseFields(
+            fieldWithPath("content").type(ARRAY).description("컨텐츠"),
+            fieldWithPath("content[0].id").type(NUMBER).description("게시판아이디"),
+            fieldWithPath("content[0].title").type(STRING).description("게시판제목"),
+            fieldWithPath("content[0].content").type(STRING).description("게시판내용"),
+            fieldWithPath("content[0].user").type(OBJECT).description("회원"),
+            fieldWithPath("content[0].user.id").type(NUMBER).description("회원아이디"),
+            fieldWithPath("content[0].user.name").type(STRING).description("회원이름"),
+            fieldWithPath("content[0].user.age").type(NUMBER).description("회원나이"),
+            fieldWithPath("content[0].user.hobbies").type(ARRAY).description("회원취미목록"),
+            fieldWithPath("content[0].user.hobbies[0].hobby").type(STRING).description("회원취미"),
+            fieldWithPath("pageNumber").type(NUMBER).description("페이지넘버"),
+            fieldWithPath("pageSize").type(NUMBER).description("페이지사이즈"),
+            fieldWithPath("first").type(BOOLEAN).description("처음"),
+            fieldWithPath("last").type(BOOLEAN).description("끝")
+        );
+    }
+
+    private ResponseFieldsSnippet responseSnippetForSaveAndUpdate() {
+        return responseFields(
+            fieldWithPath("postId").type(NUMBER).description("게시판아이디")
+        );
+>>>>>>> 1db10fa (refactor: 리스폰스 수정)
     }
 }
