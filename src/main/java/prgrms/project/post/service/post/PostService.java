@@ -5,11 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import prgrms.project.post.repository.PostRepository;
 import prgrms.project.post.controller.response.PageResponse;
+import prgrms.project.post.domain.post.Post;
+import prgrms.project.post.repository.PostRepository;
+import prgrms.project.post.util.exception.EntityNotFoundException;
 import prgrms.project.post.util.mapper.PostMapper;
 
-import java.util.NoSuchElementException;
+import static java.text.MessageFormat.format;
 
 @Slf4j
 @Service
@@ -27,8 +29,8 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostDto searchById(Long id) {
-        var retrievedPost = postRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Can't find post"));
+    public PostDto searchById(Long postId) {
+        var retrievedPost = findPost(postId);
 
         return postMapper.toDto(retrievedPost);
     }
@@ -40,14 +42,24 @@ public class PostService {
     }
 
     @Transactional
-    public Long updatePost(Long id, PostDto postDto) {
-        var retrievedPost = postRepository.findById(id).orElseThrow(() -> new NoSuchElementException("Can't find post"));
+    public Long updatePost(Long postId, PostDto postDto) {
+        var retrievedPost = findPost(postId);
 
         return retrievedPost.updateTitleAndContent(postDto.title(), postDto.content()).getId();
     }
 
     @Transactional
-    public void deleteById(Long id) {
-        postRepository.deleteById(id);
+    public void deleteById(Long postId) {
+        var retrievedPost = findPost(postId);
+
+        postRepository.delete(retrievedPost);
+    }
+
+    private Post findPost(Long postId) {
+        return postRepository.findById(postId).orElseThrow(
+            () -> new EntityNotFoundException(
+                format("Failed to find the post entity. (post id: {0})", postId)
+            )
+        );
     }
 }

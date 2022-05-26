@@ -125,8 +125,8 @@ class GlobalExceptionHandlerTest {
 
     private ResponseFieldsSnippet responseFieldsSnippet() {
         return responseFields(
-            fieldWithPath("error").type(STRING).description("에러"),
-            fieldWithPath("errorMessage").type(STRING).description("에러메시지")
+            fieldWithPath("message").type(STRING).description("에러메시지"),
+            fieldWithPath("cause").type(STRING).description("에러원인")
         );
     }
 }

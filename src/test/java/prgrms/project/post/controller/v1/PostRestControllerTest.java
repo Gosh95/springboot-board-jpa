@@ -9,22 +9,15 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.restdocs.payload.RequestFieldsSnippet;
+import org.springframework.restdocs.payload.ResponseFieldsSnippet;
 import org.springframework.test.web.servlet.MockMvc;
-<<<<<<< HEAD
-import org.springframework.transaction.annotation.Transactional;
-import prgrms.project.post.domain.post.Post;
-import prgrms.project.post.domain.user.Hobby;
-import prgrms.project.post.domain.user.User;
-import prgrms.project.post.repository.PostRepository;
-import prgrms.project.post.repository.UserRepository;
-=======
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import prgrms.project.post.controller.response.PostIdResponse;
 import prgrms.project.post.controller.response.UserIdResponse;
->>>>>>> 1db10fa (refactor: 리스폰스 수정)
 import prgrms.project.post.service.post.PostDto;
-import prgrms.project.post.service.post.PostService;
-import prgrms.project.post.util.mapper.UserMapper;
+import prgrms.project.post.service.user.HobbyDto;
+import prgrms.project.post.service.user.UserDto;
 
 import java.util.Set;
 
@@ -42,7 +35,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
 @SpringBootTest
-@Transactional
 class PostRestControllerTest {
 
     @Autowired
@@ -51,31 +43,11 @@ class PostRestControllerTest {
     @Autowired
     ObjectMapper objectMapper;
 
-    @Autowired
-    PostService postService;
+    UserDto userDto;
 
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    PostRepository postRepository;
-
-    @Autowired
-    UserMapper userMapper;
-
-    User savedUser;
     Long postId;
 
     @BeforeEach
-<<<<<<< HEAD
-    void setup() {
-        User user = User.builder().name("name").age(10).hobbies(Set.of(new Hobby("swim"))).build();
-        savedUser = userRepository.save(user);
-
-        var post = Post.builder().title("title").content("content").user(savedUser).build();
-        var savedPost = postRepository.save(post);
-        postId = savedPost.getId();
-=======
     void setup() throws Exception {
         var userRequest = UserDto.builder().name("name").age(10).hobbies(Set.of(new HobbyDto("swim"))).build();
         var userRequestString = objectMapper.writeValueAsString(userRequest);
@@ -91,7 +63,6 @@ class PostRestControllerTest {
         var postIdResponse = objectMapper.readValue(postIdResult.getResponse().getContentAsString(), PostIdResponse.class);
 
         postId = postIdResponse.postId();
->>>>>>> 1db10fa (refactor: 리스폰스 수정)
     }
 
     @Test
@@ -100,56 +71,32 @@ class PostRestControllerTest {
         var request = PostDto.builder()
                 .title("new title")
                 .content("new content")
-                .user(userMapper.toDto(savedUser))
+                .user(userDto)
                 .build();
 
         var requestString = objectMapper.writeValueAsString(request);
 
-        mockMvc.perform(post("/api/v1/posts")
+        mockMvc.perform(
+            post("/api/v1/posts")
                 .content(requestString)
                 .contentType(APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(document("post-save",
-                        requestFields(
-                                fieldWithPath("id").type(NULL).description("아이디"),
-                                fieldWithPath("title").type(STRING).description("게시판제목"),
-                                fieldWithPath("content").type(STRING).description("게시판내용"),
-                                fieldWithPath("user").type(OBJECT).description("회원"),
-                                fieldWithPath("user.id").type(NUMBER).description("회원아이디"),
-                                fieldWithPath("user.name").type(STRING).description("회원이름"),
-                                fieldWithPath("user.age").type(NUMBER).description("회원나이"),
-                                fieldWithPath("user.hobbies").type(ARRAY).description("회원취미목록"),
-                                fieldWithPath("user.hobbies[0].hobby").type(STRING).description("회원취미")
-                                ),
-                        responseFields(
-                                fieldWithPath("statusCode").type(NUMBER).description("상태코드"),
-                                fieldWithPath("serverDatetime").type(STRING).description("응답시간"),
-                                fieldWithPath("data").type(NUMBER).description("데이터")
-                        )
-                ));
+                    requestSnippetForSave(),
+                    responseSnippetForSaveAndUpdate()
+                )
+            );
     }
 
     @Test
     @DisplayName("Post 를 id 로 찾는다.")
     void testFindById() throws Exception {
         mockMvc.perform(get("/api/v1/posts/{postId}", postId)
-                .contentType(APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(document("post-find",
-                        responseFields(
-                                fieldWithPath("statusCode").type(NUMBER).description("상태코드"),
-                                fieldWithPath("serverDatetime").type(STRING).description("응답시간"),
-                                fieldWithPath("data").type(OBJECT).description("데이터"),
-                                fieldWithPath("data.id").type(NUMBER).description("게시판아이디"),
-                                fieldWithPath("data.title").type(STRING).description("게시판제목"),
-                                fieldWithPath("data.content").type(STRING).description("게시판내용"),
-                                fieldWithPath("data.user").type(OBJECT).description("회원"),
-                                fieldWithPath("data.user.id").type(NUMBER).description("회원아이디"),
-                                fieldWithPath("data.user.name").type(STRING).description("회원이름"),
-                                fieldWithPath("data.user.age").type(NUMBER).description("회원나이"),
-                                fieldWithPath("data.user.hobbies").type(ARRAY).description("회원취미목록"),
-                                fieldWithPath("data.user.hobbies[0].hobby").type(STRING).description("회원취미")
-                        )
+            .contentType(APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andDo(
+                document("post-find",
+                    responseSnippetForFindById()
                 )
             );
     }
@@ -159,32 +106,14 @@ class PostRestControllerTest {
     void testFindAll() throws Exception {
 
         mockMvc.perform(get("/api/v1/posts")
-                .param("page", "0")
-                .param("size", "1")
-                .contentType(APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(document("post-find-all",
-                        responseFields(
-                                fieldWithPath("statusCode").type(NUMBER).description("상태코드"),
-                                fieldWithPath("serverDatetime").type(STRING).description("응답시간"),
-                                fieldWithPath("data").type(OBJECT).description("데이터"),
-                                fieldWithPath("data.content").type(ARRAY).description("컨텐츠"),
-                                fieldWithPath("data.content[0].id").type(NUMBER).description("게시판아이디"),
-                                fieldWithPath("data.content[0].title").type(STRING).description("게시판제목"),
-                                fieldWithPath("data.content[0].content").type(STRING).description("게시판내용"),
-                                fieldWithPath("data.content[0].user").type(OBJECT).description("회원"),
-                                fieldWithPath("data.content[0].user.id").type(NUMBER).description("회원아이디"),
-                                fieldWithPath("data.content[0].user.name").type(STRING).description("회원이름"),
-                                fieldWithPath("data.content[0].user.age").type(NUMBER).description("회원나이"),
-                                fieldWithPath("data.content[0].user.hobbies").type(ARRAY).description("회원취미목록"),
-                                fieldWithPath("data.content[0].user.hobbies[0].hobby").type(STRING).description("회원취미"),
-                                fieldWithPath("data.pageNumber").type(NUMBER).description("페이지넘버"),
-                                fieldWithPath("data.pageSize").type(NUMBER).description("페이지사이즈"),
-                                fieldWithPath("data.first").type(BOOLEAN).description("처음"),
-                                fieldWithPath("data.last").type(BOOLEAN).description("끝")
-                        )
-                    )
-                );
+            .param("size", "1")
+            .contentType(APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andDo(
+                document("post-find-all",
+                    responseSnippetForFindAll()
+                )
+            );
     }
 
     @Test
@@ -194,7 +123,7 @@ class PostRestControllerTest {
                 .id(postId)
                 .title("updated title")
                 .content("updated content")
-                .user(userMapper.toDto(savedUser))
+                .user(userDto)
                 .build();
 
         var requestString = objectMapper.writeValueAsString(request);
@@ -204,26 +133,6 @@ class PostRestControllerTest {
                 .contentType(APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(document("post-update",
-<<<<<<< HEAD
-                        requestFields(
-                                fieldWithPath("id").type(NUMBER).description("게시판아이디"),
-                                fieldWithPath("title").type(STRING).description("게시판제목"),
-                                fieldWithPath("content").type(STRING).description("게시판내용"),
-                                fieldWithPath("user").type(OBJECT).description("회원"),
-                                fieldWithPath("user.id").type(NUMBER).description("회원아이디"),
-                                fieldWithPath("user.name").type(STRING).description("회원이름"),
-                                fieldWithPath("user.age").type(NUMBER).description("회원나이"),
-                                fieldWithPath("user.hobbies").type(ARRAY).description("회원취미목록"),
-                                fieldWithPath("user.hobbies[0].hobby").type(STRING).description("회원취미")
-                        ),
-                        responseFields(
-                                fieldWithPath("statusCode").type(NUMBER).description("상태코드"),
-                                fieldWithPath("serverDatetime").type(STRING).description("응답시간"),
-                                fieldWithPath("data").type(NUMBER).description("데이터")
-                        )
-                    )
-                );
-=======
                     requestSnippetForUpdate(),
                     responseSnippetForSaveAndUpdate()
                 )
@@ -295,6 +204,5 @@ class PostRestControllerTest {
         return responseFields(
             fieldWithPath("postId").type(NUMBER).description("게시판아이디")
         );
->>>>>>> 1db10fa (refactor: 리스폰스 수정)
     }
 }
